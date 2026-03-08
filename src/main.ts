@@ -4,7 +4,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as os from 'os';
-import * as fs from 'fs'; // Tambahkan fs untuk cek folder
+import * as fs from 'fs';
+
+// Tambahkan variabel untuk mengecek apakah sedang di Vercel
+const isVercel = process.env.VERCEL === '1';
 
 async function bootstrap() {
   try {
@@ -13,25 +16,22 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // ============================================================
-    // 1. PASTIKAN FOLDER UPLOADS ADA (Mencegah Error 404)
+    // 1. PASTIKAN FOLDER UPLOADS ADA (Hanya dijalankan jika BUKAN di Vercel)
     // ============================================================
-    const uploadDir = join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-      console.log('📁 Folder uploads berhasil dibuat otomatis.');
-    }
+    if (!isVercel) {
+      const uploadDir = join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log('📁 Folder uploads berhasil dibuat otomatis.');
+      }
 
-    // ============================================================
-    // 2. SERVE STATIC FILES (DENGAN PATH YANG LEBIH AKURAT)
-    // process.cwd() memastikan kita mencari dari folder root project
-    // ============================================================
-    app.useStaticAssets(join(process.cwd(), 'uploads'), {
-      prefix: '/uploads/',
-      // Tambahkan header cache agar loading lebih cepat
-      setHeaders: (res) => {
-        res.set('Access-Control-Allow-Origin', '*');
-      },
-    });
+      app.useStaticAssets(join(process.cwd(), 'uploads'), {
+        prefix: '/uploads/',
+        setHeaders: (res) => {
+          res.set('Access-Control-Allow-Origin', '*');
+        },
+      });
+    }
 
     app.enableCors({
       origin: '*',
@@ -47,29 +47,43 @@ async function bootstrap() {
       }),
     );
 
-    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-    await app.listen(port, '0.0.0.0');
+    // ============================================================
+    // LOGIKA STARTING SERVER
+    // ============================================================
+    if (!isVercel) {
+      // Jika di Local (PC), jalankan listen secara normal
+      const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+      await app.listen(port, '0.0.0.0');
 
-    const interfaces = os.networkInterfaces();
-    let localIp = 'localhost';
-    for (const name of Object.keys(interfaces)) {
-      for (const net of interfaces[name] || []) {
-        if (net.family === 'IPv4' && !net.internal) {
-          localIp = net.address;
-          break;
+      const interfaces = os.networkInterfaces();
+      let localIp = 'localhost';
+      for (const name of Object.keys(interfaces)) {
+        for (const net of interfaces[name] || []) {
+          if (net.family === 'IPv4' && !net.internal) {
+            localIp = net.address;
+            break;
+          }
         }
       }
-    }
 
-    console.log(`🚀 Backend ZieSen running:`);
-    console.log(`👉 Local   : http://localhost:${port}/api`);
-    console.log(`👉 Network : http://${localIp}:${port}/api`);
-    console.log(`👉 Static  : http://localhost:${port}/uploads/ (Akses Foto)`);
+      console.log(`🚀 Backend ZieSen running:`);
+      console.log(`👉 Local   : http://localhost:${port}/api`);
+      console.log(`👉 Network : http://${localIp}:${port}/api`);
+      console.log(`👉 Static  : http://localhost:${port}/uploads/ (Akses Foto)`);
+    } else {
+      // Jika di Vercel, cukup inisialisasi aplikasi (Vercel yang akan handle port)
+      await app.init();
+      return (app as any).getHttpAdapter().getInstance();
+    }
 
   } catch (err) {
     console.error('❌ Error starting server:', err);
-    process.exit(1);
+    if (!isVercel) process.exit(1);
   }
 }
 
+// Export bootstrap untuk kebutuhan Vercel (jika file index.ts kamu memanggil file ini)
+export const viteNodeApp = bootstrap();
+
+// Jalankan bootstrap
 bootstrap();
