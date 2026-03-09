@@ -30,19 +30,22 @@ export class Student {
   @Prop({ default: 'Belum Absen' })
   status: string;
 
-  // FIELD BARU: Mengizinkan Date atau null agar tidak error saat reset/update
   @Prop({ type: Date, default: null })
   lastPulang?: Date | null;
 
-  @Prop({ type: [{ 
-    status: String, 
-    timestamp: Date, 
-    method: String, 
-    mapel: String, 
-    jam: String, 
-    day: String,
-    kelas: String
-  }]})
+  @Prop({
+    type: [
+      {
+        status: String,
+        timestamp: Date,
+        method: String,
+        mapel: String,
+        jam: String,
+        day: String,
+        kelas: String,
+      },
+    ],
+  })
   attendanceHistory: Attendance[];
 }
 

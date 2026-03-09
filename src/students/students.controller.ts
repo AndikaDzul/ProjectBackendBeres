@@ -38,13 +38,14 @@ export class StudentsController {
     return this.studentsService.createAttendance(nis, body);
   }
 
-  // Route Log Pulang
+  // FIX: Menggunakan @Body() body: any agar lebih fleksibel menangkap timestamp
   @Post('attendance/pulang/:nis')
   async logPulang(
     @Param('nis') nis: string,
-    @Body('timestamp') timestamp: string,
+    @Body() body: { timestamp: string },
   ) {
-    return this.studentsService.createPulangLog(nis, timestamp);
+    // Mengambil timestamp dari body object
+    return this.studentsService.createPulangLog(nis, body.timestamp);
   }
 
   @Post('absensi-manual')

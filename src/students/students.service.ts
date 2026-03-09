@@ -61,7 +61,8 @@ export class StudentsService {
       timestamp,
       method: body.method || 'QR Scan',
       mapel: body.mapel || 'Pelajaran Umum',
-      jam: timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      // Menambahkan timeZone agar jam tepat WIB
+      jam: timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }),
       day: timestamp.toLocaleDateString('id-ID', { weekday: 'long' }),
     };
 
@@ -72,7 +73,7 @@ export class StudentsService {
     return student.save();
   }
 
-  // ================= LOGIKA PULANG (BARU) =================
+  // ================= LOGIKA PULANG (DIPERBAIKI) =================
   async createPulangLog(nis: string, timestampStr: string): Promise<Student> {
     const student = await this.studentModel.findOne({ nis }).exec();
     if (!student) throw new NotFoundException('Siswa tidak ditemukan');
@@ -84,7 +85,8 @@ export class StudentsService {
       timestamp: timestamp,
       method: 'Siswa Self-Log',
       mapel: 'Selesai KBM',
-      jam: timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      // FIX: Menambahkan jam agar muncul di history
+      jam: timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }),
       day: timestamp.toLocaleDateString('id-ID', { weekday: 'long' }),
     };
 
@@ -92,7 +94,7 @@ export class StudentsService {
     student.attendanceHistory.push(attendance);
     
     student.status = 'Pulang';
-    // Casting ke any untuk menghindari error TS saat assign Date ke field lastPulang
+    // Mengeset lastPulang agar UI Profil bisa menampilkan jam terakhir pulang
     (student as any).lastPulang = timestamp;
 
     return student.save();
@@ -109,6 +111,7 @@ export class StudentsService {
       timestamp: now,
       method: `Manual by ${teacherName}`,
       mapel: 'Input Manual',
+      jam: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }),
       day: now.toLocaleDateString('id-ID', { weekday: 'long' }),
     };
 
@@ -135,7 +138,6 @@ export class StudentsService {
     
     student.status = 'Belum Absen';
     student.attendanceHistory = [];
-    // Casting ke any agar mengizinkan null sesuai logic database
     (student as any).lastPulang = null;
     
     return student.save();
