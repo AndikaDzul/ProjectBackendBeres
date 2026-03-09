@@ -15,7 +15,6 @@ export interface Attendance {
 
 @Schema({ timestamps: true })
 export class Student {
-
   @Prop({ required: true, unique: true })
   nis: string;
 
@@ -46,7 +45,6 @@ export class Student {
         kelas: String,
       },
     ],
-    default: [],
   })
   attendanceHistory: Attendance[];
 }
