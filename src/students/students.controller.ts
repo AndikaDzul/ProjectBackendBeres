@@ -38,16 +38,17 @@ export class StudentsController {
     @Param('nis') nis: string,
     @Body() body: CreateAttendanceDto,
   ) {
+    // Menambahkan log untuk mempermudah debugging jika gagal
+    console.log('Attendance Request:', body);
     return this.studentsService.createAttendance(nis, body);
   }
 
-  // ================= ENDPOINT LOG PULANG =================
   @Post('attendance/pulang/:nis')
-  async logPulang(@Param('nis') nis: string, @Body('timestamp') body: { timestamp: string }) {
+  async logPulang(@Param('nis') nis: string, @Body() body: { timestamp: string }) {
+    // Mengambil timestamp dari body object
     return this.studentsService.createPulangLog(nis, body.timestamp);
   }
 
-  // ================= ENDPOINT UPLOAD BUKTI =================
   @Post('attendance/evidence/:nis')
   @UseInterceptors(
     FileInterceptor('evidence', {
@@ -66,9 +67,7 @@ export class StudentsController {
   }
 
   @Post('absensi-manual')
-  async updateManual(
-    @Body() body: { nis: string; status: string; teacherName: string },
-  ) {
+  async updateManual(@Body() body: { nis: string; status: string; teacherName: string }) {
     return this.studentsService.updateManual(body.nis, body.status, body.teacherName);
   }
 
