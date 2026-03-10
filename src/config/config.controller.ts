@@ -1,6 +1,6 @@
+// src/config/config.controller.ts
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ConfigService } from './config.service';
-import { Config } from './config.schema';
 
 @Controller('config')
 export class ConfigController {
@@ -12,7 +12,7 @@ export class ConfigController {
   }
 
   @Post('gps')
-  async saveGps(@Body() body: Partial<Config>) {
+  async saveGps(@Body() body: any) {
     return this.configService.saveGpsConfig(body);
   }
 }
